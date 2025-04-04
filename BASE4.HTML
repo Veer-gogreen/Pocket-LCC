@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POCKET LCC</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); max-width: 600px; margin: auto; }
+        label { font-weight: bold; display: block; margin: 15px 0 5px; }
+        select, button { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background-color: #28a745; color: white; cursor: pointer; }
+        button:hover { background-color: #218838; }
+
+
+	h1, h2, h3, h4, h5, h6 {
+   	 margin-top: 5px;  /* Reduce space above */
+   	 margin-bottom: 5px; /* Reduce space below */
+   	 padding: 0; /* Remove extra padding */
+	}
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            white-space: nowrap;
+            display: none; /* Initially hidden */
+        }
+
+        table {
+            width: 100%;
+            min-width: 900px; /* Ensures scrolling if necessary */
+            border-collapse: collapse;
+            background: #ffffff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            table-layout: auto;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #f1c40f;
+            color: #ffffff;
+            transition: 0.3s;
+        }
+
+        /* Ensure scrolling works on mobile */
+        @media screen and (max-width: 768px) {
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
+            }
+        }
+
+        /* Back button styling */
+        .back-button {
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Initially hidden */
+        }
+
+        .back-button:hover {
+            background-color: #c82333;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="formContainer" class="container">
+        <h2>POCKET LCC</h2>
+	<h7>Updated on 03.04.2025</h7>
+
+        <label for="sheet">Select Portfolio:</label>
+        <select id="sheet" required>
+            <option value="">Loading Sheets...</option>
+        </select>
+
+        <label for="unit">Unit:</label>
+        <select id="unit" required>
+            <option value="">Select Unit First</option>
+        </select>
+
+        <label for="reName">RE Name:</label>
+        <select id="reName" required>
+            <option value="">Select Unit First</option>
+        </select>
+
+        <button onclick="fetchFilteredData()">Search</button>
+    </div>
+
+    <div id="tableContainer" class="table-container">
+        <h2>Portfolio Details</h2>
+        <table id="dataTable">
+            <thead id="tableHeader"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+
+        <button class="back-button" onclick="showForm()">Go Back</button>
+    </div>
+
+    <script>
+        const scriptURL = "https://script.google.com/macros/s/AKfycbx9bqTkxwDDRsD6CZkk6fdVPzd0rw4bmnf3X4fB_OZ35BFDMpYYfplUg4RTpDJPsHFFGA/exec";
+
+        async function fetchSheets() {
+            const response = await fetch(scriptURL + "?action=getSheets");
+            const sheets = await response.json();
+            const sheetDropdown = document.getElementById("sheet");
+            sheetDropdown.innerHTML = `<option value="">Select Sheet</option>`;
+
+            sheets.forEach(sheet => {
+                let option = document.createElement("option");
+                option.value = sheet;
+                option.textContent = sheet;
+                sheetDropdown.appendChild(option);
+            });
+
+            sheetDropdown.addEventListener("change", fetchDropdownData);
+        }
+
+        async function fetchDropdownData() {
+            const sheet = document.getElementById("sheet").value;
+            if (!sheet) return;
+
+            const response = await fetch(scriptURL + `?action=getDropdownData&sheet=${encodeURIComponent(sheet)}`);
+            const data = await response.json();
+
+            const unitDropdown = document.getElementById("unit");
+            unitDropdown.innerHTML = `<option value="">Select Unit</option>`;
+            document.getElementById("reName").innerHTML = `<option value="">Select Unit First</option>`;
+
+            Object.keys(data).forEach(unit => {
+                let option = document.createElement("option");
+                option.value = unit;
+                option.textContent = unit;
+                unitDropdown.appendChild(option);
+            });
+
+            unitDropdown.addEventListener("change", function () {
+                const reDropdown = document.getElementById("reName");
+                reDropdown.innerHTML = `<option value="">Select RE Name</option>`;
+                const selectedUnit = this.value;
+                if (data[selectedUnit]) {
+                    data[selectedUnit].forEach(re => {
+                        let option = document.createElement("option");
+                        option.value = re;
+                        option.textContent = re;
+                        reDropdown.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        async function fetchFilteredData() {
+            const sheet = document.getElementById("sheet").value;
+            const unit = document.getElementById("unit").value;
+            const reName = document.getElementById("reName").value;
+            if (!sheet || !unit || !reName) return alert("Please select all fields!");
+
+            const response = await fetch(`${scriptURL}?action=getFilteredData&sheet=${encodeURIComponent(sheet)}&unit=${encodeURIComponent(unit)}&reName=${encodeURIComponent(reName)}`);
+            const result = await response.json();
+
+            document.getElementById("tableHeader").innerHTML = `<tr>${result.headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
+            document.getElementById("tableBody").innerHTML = result.data.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
+
+            // Hide form and show table
+            document.getElementById("formContainer").style.display = "none";
+            document.getElementById("tableContainer").style.display = "block";
+            document.querySelector(".back-button").style.display = "block";
+        }
+
+        function showForm() {
+            // Show form and hide table
+            document.getElementById("formContainer").style.display = "block";
+            document.getElementById("tableContainer").style.display = "none";
+            document.querySelector(".back-button").style.display = "none";
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchSheets);
+    </script>
+
+</body>
+</html>
