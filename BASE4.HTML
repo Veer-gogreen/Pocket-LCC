@@ -12,23 +12,22 @@
         button { background-color: #28a745; color: white; cursor: pointer; }
         button:hover { background-color: #218838; }
 
-
-	h1, h2, h3, h4, h5, h6 {
-   	 margin-top: 5px;  /* Reduce space above */
-   	 margin-bottom: 5px; /* Reduce space below */
-   	 padding: 0; /* Remove extra padding */
-	}
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding: 0;
+        }
 
         .table-container {
             width: 100%;
             overflow-x: auto;
             white-space: nowrap;
-            display: none; /* Initially hidden */
+            display: none;
         }
 
         table {
             width: 100%;
-            min-width: 900px; /* Ensures scrolling if necessary */
+            min-width: 900px;
             border-collapse: collapse;
             background: #ffffff;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
@@ -58,15 +57,13 @@
             transition: 0.3s;
         }
 
-        /* Ensure scrolling works on mobile */
         @media screen and (max-width: 768px) {
             .table-container {
                 overflow-x: auto;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
+                -webkit-overflow-scrolling: touch;
             }
         }
 
-        /* Back button styling */
         .back-button {
             margin: 20px 0;
             padding: 10px 20px;
@@ -75,7 +72,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            display: none; /* Initially hidden */
+            display: none;
         }
 
         .back-button:hover {
@@ -88,7 +85,7 @@
 
     <div id="formContainer" class="container">
         <h2>POCKET LCC</h2>
-	<h7>Updated Details on 05.04.2025</h7>
+        <h7>Updated Details on 05.04.2025</h7>
 
         <label for="sheet">Select Portfolio:</label>
         <select id="sheet" required>
@@ -101,8 +98,8 @@
         </select>
 
         <label for="reName">RE Name:</label>
-        <select id="reName" required>
-            <option value="">Select Unit First</option>
+        <select id="reName">
+            <option value="">(Optional) Select RE Name</option>
         </select>
 
         <button onclick="fetchFilteredData()">Search</button>
@@ -119,7 +116,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbx9bqTkxwDDRsD6CZkk6fdVPzd0rw4bmnf3X4fB_OZ35BFDMpYYfplUg4RTpDJPsHFFGA/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwdctgo40xL9w9IRn_hPAWocfWl4He53oy4jYTnzs37vTP_50uIcQeJkFDSrMoApJN7GQ/exec";
 
         async function fetchSheets() {
             const response = await fetch(scriptURL + "?action=getSheets");
@@ -146,7 +143,7 @@
 
             const unitDropdown = document.getElementById("unit");
             unitDropdown.innerHTML = `<option value="">Select Unit</option>`;
-            document.getElementById("reName").innerHTML = `<option value="">Select Unit First</option>`;
+            document.getElementById("reName").innerHTML = `<option value="">(Optional) Select RE Name</option>`;
 
             Object.keys(data).forEach(unit => {
                 let option = document.createElement("option");
@@ -157,7 +154,7 @@
 
             unitDropdown.addEventListener("change", function () {
                 const reDropdown = document.getElementById("reName");
-                reDropdown.innerHTML = `<option value="">Select RE Name</option>`;
+                reDropdown.innerHTML = `<option value="">(Optional) Select RE Name</option>`;
                 const selectedUnit = this.value;
                 if (data[selectedUnit]) {
                     data[selectedUnit].forEach(re => {
@@ -174,22 +171,31 @@
             const sheet = document.getElementById("sheet").value;
             const unit = document.getElementById("unit").value;
             const reName = document.getElementById("reName").value;
-            if (!sheet || !unit || !reName) return alert("Please select all fields!");
 
-            const response = await fetch(`${scriptURL}?action=getFilteredData&sheet=${encodeURIComponent(sheet)}&unit=${encodeURIComponent(unit)}&reName=${encodeURIComponent(reName)}`);
+            if (!sheet || !unit) return alert("Please select Portfolio and Unit!");
+
+            let url = `${scriptURL}?action=getFilteredData&sheet=${encodeURIComponent(sheet)}&unit=${encodeURIComponent(unit)}`;
+            if (reName) {
+                url += `&reName=${encodeURIComponent(reName)}`;
+            }
+
+            const response = await fetch(url);
             const result = await response.json();
+
+            if (!result.data.length) {
+                alert("No data found!");
+                return;
+            }
 
             document.getElementById("tableHeader").innerHTML = `<tr>${result.headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
             document.getElementById("tableBody").innerHTML = result.data.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
 
-            // Hide form and show table
             document.getElementById("formContainer").style.display = "none";
             document.getElementById("tableContainer").style.display = "block";
             document.querySelector(".back-button").style.display = "block";
         }
 
         function showForm() {
-            // Show form and hide table
             document.getElementById("formContainer").style.display = "block";
             document.getElementById("tableContainer").style.display = "none";
             document.querySelector(".back-button").style.display = "none";
