@@ -43,7 +43,7 @@
         tr:nth-child(even) { background-color: #f2f2f2; }
         tr:hover { background-color: #f1c40f; color: white; transition: 0.3s; }
 
-        .back-button {
+         .back-button {
             margin: 20px 0;
             padding: 10px 20px;
             background-color: #dc3545;
@@ -54,14 +54,17 @@
             display: none;
         }
 
+        .back-button { background-color: #dc3545; }
         .back-button:hover { background-color: #c82333; }
+        .save-button { background-color: #007bff; }
+        .save-button:hover { background-color: #0056b3; }
     </style>
 </head>
 <body>
 
     <!-- Password Protection -->
     <div id="loginContainer" class="container">
-	<h1>POCKET LCC</h1>
+        <h1>POCKET LCC</h1>
         <h2>Enter Password</h2>
         <label for="password">Password:</label>
         <input type="password" id="password" placeholder="Enter Password">
@@ -100,12 +103,13 @@
                 <tbody id="tableBody"></tbody>
             </table>
             <button class="back-button" onclick="showForm()">Go Back</button>
+            <button class="save-button" onclick="saveTableData()">Save to Google Sheet</button>
         </div>
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbzxqqFZ2kaw0qzKdqz2wvuAgVIhfXdiNZTWWNu5pmVcWVQ03OdIbwDjOdTr5nLJHDuXJA/exec";
-        const correctPassword = "BMREG123*"; // Change this to your desired password
+        const scriptURL = "https://script.google.com/macros/s/AKfycbzVSCpbwHk7cztAbQ2KGa7cC1GsOf6AbuPwGHTFDZKNKw94wAdY87wUZhbbAE1c9L9B/exec"; // Replace with your actual Google Apps Script URL
+        const correctPassword = "BMREG123*"; 
 
         function checkPassword() {
             const inputPassword = document.getElementById("password").value;
@@ -151,8 +155,8 @@
                 option.textContent = unit;
                 unitDropdown.appendChild(option);
             });
-
-            unitDropdown.addEventListener("change", function () {
+	    
+		unitDropdown.addEventListener("change", function () {
                 const reDropdown = document.getElementById("reName");
                 reDropdown.innerHTML = `<option value="">(Optional) Select RE Name</option>`;
                 const selectedUnit = this.value;
@@ -170,7 +174,7 @@
         async function fetchFilteredData() {
             const sheet = document.getElementById("sheet").value;
             const unit = document.getElementById("unit").value;
-            const reName = document.getElementById("reName").value;
+	    const reName = document.getElementById("reName").value;
 
             if (!sheet || !unit) return alert("Please select Portfolio and Unit!");
 
@@ -178,6 +182,7 @@
             if (reName) {
                 url += `&reName=${encodeURIComponent(reName)}`;
             }
+
 
             const response = await fetch(url);
             const result = await response.json();
@@ -187,15 +192,29 @@
                 return;
             }
 
-            document.getElementById("tableHeader").innerHTML = `<tr>${result.headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
-            document.getElementById("tableBody").innerHTML = result.data.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
+            document.getElementById("tableHeader").innerHTML = `<tr><th>Select</th>${result.headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
+            document.getElementById("tableBody").innerHTML = result.data.map(row => 
+                `<tr><td><input type="checkbox"></td>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`
+            ).join("");
 
             document.getElementById("formContainer").style.display = "none";
             document.getElementById("tableContainer").style.display = "block";
             document.querySelector(".back-button").style.display = "block";
+            document.querySelector(".save-button").style.display = "block";
         }
 
-        function showForm() {
+        async function saveTableData() {
+            const selectedRows = [...document.querySelectorAll("#dataTable tbody tr")]
+                .filter(row => row.querySelector("input").checked)
+                .map(row => [...row.children].slice(1).map(cell => cell.textContent));
+
+            if (!selectedRows.length) return alert("No rows selected!");
+
+            await fetch(`${scriptURL}?action=saveData`, { method: "POST", body: JSON.stringify({ data: selectedRows }) });
+            alert("Selected data saved successfully!");
+        }
+
+	function showForm() {
             document.getElementById("formContainer").style.display = "block";
             document.getElementById("tableContainer").style.display = "none";
             document.querySelector(".back-button").style.display = "none";
