@@ -54,10 +54,19 @@
             display: none;
         }
 
+        #searchInput {
+            width: 50%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
         .back-button { background-color: #dc3545; }
         .back-button:hover { background-color: #c82333; }
         .save-button { background-color: #007bff; }
         .save-button:hover { background-color: #0056b3; }
+
     </style>
 </head>
 <body>
@@ -98,6 +107,10 @@
 
         <div id="tableContainer" class="table-container">
             <h2>Portfolio Details</h2>
+
+        <!-- Search Input for Filtering -->
+        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search for RE Name, Vehicle Reg No, Cust Name, Agreement No...">
+
             <table id="dataTable">
                 <thead id="tableHeader"></thead>
                 <tbody id="tableBody"></tbody>
@@ -108,7 +121,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbzVSCpbwHk7cztAbQ2KGa7cC1GsOf6AbuPwGHTFDZKNKw94wAdY87wUZhbbAE1c9L9B/exec"; // Replace with your actual Google Apps Script URL
+        const scriptURL = "https://script.google.com/macros/s/AKfycbz_Gh7Xw3_gIDISVrdEnGYxUyc0zxCseYvxDnKVdVrThzourSTyQ4uiQmxiKz0gFXfYKA/exec"; // Replace with your actual Google Apps Script URL
         const correctPassword = "BMREG123*"; 
 
         function checkPassword() {
@@ -219,6 +232,26 @@
             document.getElementById("tableContainer").style.display = "none";
             document.querySelector(".back-button").style.display = "none";
         }
+
+	function filterTable() {
+    let input = document.getElementById("searchInput").value.toLowerCase();
+    let rows = document.querySelectorAll("#tableContainer tbody tr"); // Target only tbody rows
+    let noResults = document.getElementById("noResults");
+    let found = false;
+
+    rows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        if (text.includes(input)) {
+            row.style.display = "";
+            found = true;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    // Show "No Results" row if no matches are found
+    noResults.style.display = found ? "none" : "table-row";
+}
     </script>
 
 </body>
